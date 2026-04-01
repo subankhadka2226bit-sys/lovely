@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Ignite | Pro Edition</title>
+    <style>
+        /* === PREMIUM THEME VARIABLES === */
+        :root {
+            --bg-base: #0f070a; 
+            --bg-surface: #1c0d13;
+            --bg-elevated: #2a131d;
+            --accent: #FF2D55; 
+            --accent-glow: rgba(255, 45, 85, 0.4);
+            --text-primary: #FFFFFF;
+            --text-secondary: #a38790;
+            --border: rgba(255, 255, 255, 0.08);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
+        
+        body { background: #000; color: var(--text-primary); display: flex; justify-content: center; align-items: center; min-height: 100vh; min-height: 100dvh; overflow: hidden; }
+
+        #app-frame { width: 100%; height: 100vh; height: 100dvh; background: var(--bg-base); position: relative; overflow: hidden; display: flex; flex-direction: column; }
+
+        /* VIEWS & LAYOUT */
+        .view { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-base); display: flex; flex-direction: column; opacity: 0; pointer-events: none; transition: 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); transform: scale(0.98); z-index: 10; }
+        .view.active { opacity: 1; pointer-events: auto; z-index: 20; transform: scale(1); }
+        
+        /* THE FIX 1: Added display: block !important; to stop flexbox from squishing contents */
+        .padding-view { padding: 24px; padding-top: 80px; overflow-y: auto; padding-bottom: 120px; display: block !important; }
+
+        /* HEADER */
+        .top-header { display: flex; justify-content: center; align-items: center; padding: 15px 24px; background: linear-gradient(to bottom, rgba(15, 7, 10, 0.95), transparent); position: absolute; top: 0; width: 100%; z-index: 50; }
+        .logo { font-size: 24px; font-weight: 900; display: flex; align-items: center; gap: 6px; letter-spacing: -0.5px; }
+        .logo svg { width: 24px; height: 24px; fill: var(--accent); }
+
+        /* BUTTONS & FORMS */
+        .btn { width: 100%; padding: 18px; border-radius: 16px; font-size: 16px; font-weight: 700; cursor: pointer; border: none; margin-bottom: 14px; transition: 0.2s; }
+        .btn-primary { background: var(--accent); color: white; box-shadow: 0 8px 20px var(--accent-glow); }
+        .btn-primary:active { transform: scale(0.98); }
+        .btn-secondary { background: var(--bg-surface); color: var(--accent); border: 1px solid var(--accent); }
+        
+        .input-group { margin-bottom: 20px; width: 100%; }
+        .input-group label { display: block; font-size: 12px; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 8px; font-weight: 700; letter-spacing: 0.5px; }
+        .input-field { width: 100%; background: var(--bg-surface); border: 1px solid var(--border); color: white; padding: 16px; border-radius: 12px; font-size: 16px; outline: none; transition: 0.2s; appearance: none; }
+        .input-field:focus { border-color: var(--accent); }
+        select.input-field { background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23FFFFFF%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E"); background-repeat: no-repeat; background-position: right 16px top 50%; background-size: 12px auto; }
+        
+        .photo-upload { width: 120px; height: 120px; border-radius: 50%; background: var(--bg-surface); border: 2px dashed var(--accent); margin: 0 auto 30px; display: flex; justify-content: center; align-items: center; flex-direction: column; cursor: pointer; position: relative; overflow: hidden; }
+        .photo-upload img { width: 100%; height: 100%; object-fit: cover; position: absolute; display: none; z-index: 1;}
+        .photo-upload input { position: absolute; width: 100%; height: 100%; opacity: 0; cursor: pointer; z-index: 2; }
+
+        /* DECK (DISCOVER) */
+        .deck { flex: 1; position: relative; display: flex; justify-content: center; align-items: center; padding: 80px 5% 120px; }
+        .card { position: absolute; width: 95%; height: 75%; max-height: 600px; background: var(--bg-elevated); border-radius: 20px; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.8); cursor: grab; border: 1px solid rgba(255,255,255,0.05); user-select: none; }
+        .card:active { cursor: grabbing; }
+        .card img { width: 100%; height: 100%; object-fit: cover; position: absolute; pointer-events: none; }
+        .card-info { position: absolute; bottom: 0; width: 100%; padding: 40px 24px 30px; background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, transparent 100%); z-index: 2; pointer-events: none; }
+        .card-info h2 { font-size: 32px; font-weight: 800; display: flex; align-items: center; gap: 8px;}
+        .card-info p { font-size: 15px; color: #ddd; margin-top: 4px; font-weight: 500;}
+        .location-badge { font-size: 12px; background: rgba(255,255,255,0.2); backdrop-filter: blur(5px); padding: 4px 10px; border-radius: 12px; display: inline-flex; align-items: center; gap: 4px; margin-top: 8px;}
+        
+        .controls { position: absolute; bottom: 100px; width: 100%; display: flex; justify-content: center; gap: 20px; z-index: 30; }
+        .circle-btn { width: 60px; height: 60px; border-radius: 50%; background: var(--bg-surface); border: 1px solid var(--border); display: flex; justify-content: center; align-items: center; cursor: pointer; transition: 0.2s;}
+        .circle-btn:active { transform: scale(0.9); }
+        .circle-btn.like { background: var(--accent); border: none; width: 70px; height: 70px; box-shadow: 0 10px 25px var(--accent-glow);}
+        .circle-btn svg { width: 26px; height: 26px; fill: white; }
+
+        /* REELS / FEED */
+        #view-reels { overflow-y: scroll; scroll-snap-type: y mandatory; background: #000; }
+        #view-reels::-webkit-scrollbar { display: none; }
+        .reel-container { width: 100%; height: 100vh; height: 100dvh; position: relative; scroll-snap-align: start; flex: 0 0 auto; }
+        .reel-video { width: 100%; height: 100%; object-fit: cover; opacity: 0.9;}
+        .reel-ui { position: absolute; bottom: 90px; width: 100%; padding: 20px; display: flex; justify-content: space-between; align-items: flex-end; z-index: 5; background: linear-gradient(to top, rgba(0,0,0,0.8), transparent); }
+        .reel-info h3 { font-size: 18px; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.8); }
+        .reel-info p { font-size: 14px; margin-bottom: 12px; max-width: 250px; text-shadow: 0 1px 3px rgba(0,0,0,0.8); line-height: 1.4;}
+        .reel-actions { display: flex; flex-direction: column; gap: 16px; align-items: center; padding-bottom: 10px;}
+        .reel-action-btn { background: none; border: none; color: white; display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 13px; font-weight: 600; cursor: pointer;}
+        .reel-action-btn svg { width: 34px; height: 34px; fill: white; filter: drop-shadow(0 2px 6px rgba(0,0,0,0.5)); transition: 0.2s;}
+        
+        /* PRO CAMERA STUDIO */
+        .camera-view { background: #000; justify-content: space-between; align-items: center; padding: 40px 20px; position: relative; }
+        .camera-header { width: 100%; display: flex; justify-content: space-between; z-index: 2; align-items: center;}
+        .add-music-btn { background: rgba(255,255,255,0.15); backdrop-filter: blur(10px); padding: 8px 16px; border-radius: 20px; color: white; font-weight: 600; display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 14px;}
+        
+        /* THE FIX 2: Added justify-content: center; and width: 100%; to align the record buttons correctly */
+        .capture-area { display: flex; align-items: center; justify-content: center; width: 100%; gap: 30px; margin-bottom: 40px; z-index: 2;}
+        
+        .capture-btn { width: 75px; height: 75px; border-radius: 50%; border: 4px solid white; display: flex; justify-content: center; align-items: center; cursor: pointer; }
+        .capture-inner { width: 55px; height: 55px; background: var(--accent); border-radius: 50%; transition: 0.2s;}
+        .capture-btn:active .capture-inner { transform: scale(0.8); border-radius: 10px;}
+        .cam-tool { background: rgba(255,255,255,0.1); border: none; width: 45px; height: 45px; border-radius: 50%; display: flex; justify-content: center; align-items: center; cursor: pointer; backdrop-filter: blur(5px);}
+        .cam-tool svg { width: 20px; fill: white;}
+        #live-camera { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: 1; transform: scaleX(-1); }
+        .camera-ui-layer { z-index: 2; display: flex; flex-direction: column; justify-content: space-between; height: 100%; width: 100%; }
+
+        /* INBOX & CHAT */
+        .chat-row { display: flex; align-items: center; gap: 16px; padding: 12px; background: var(--bg-surface); border-radius: 16px; margin-bottom: 10px; cursor: pointer; border: 1px solid transparent; transition: 0.2s;}
+        .chat-row:active { border-color: var(--border); background: var(--bg-elevated);}
+        .chat-row img { width: 55px; height: 55px; border-radius: 50%; object-fit: cover; }
+        .unread-dot { width: 10px; height: 10px; background: var(--accent); border-radius: 50%; margin-left: auto; }
+        
+        .chat-header { background: rgba(28, 13, 19, 0.95); border-bottom: 1px solid var(--border); padding: 10px 20px; }
+        .chat-messages-container { flex:1; padding: 80px 20px; display:flex; flex-direction:column; background: var(--bg-base); overflow-y: auto; }
+        .chat-bottom { padding: 15px 20px; background: var(--bg-surface); border-top: 1px solid var(--border); display: flex; gap: 12px; align-items: center; padding-bottom: calc(15px + env(safe-area-inset-bottom)); }
+
+        /* NEW SETTINGS UI */
+        .settings-group { background: var(--bg-surface); border-radius: 16px; overflow: hidden; margin-bottom: 24px; border: 1px solid var(--border); }
+        .setting-item { display: flex; align-items: center; padding: 16px; border-bottom: 1px solid var(--border); cursor: pointer; transition: 0.2s; }
+        .setting-item:last-child { border-bottom: none; }
+        .setting-item:active { background: var(--bg-elevated); }
+        .setting-icon { width: 34px; height: 34px; border-radius: 10px; background: rgba(255,255,255,0.08); display: flex; justify-content: center; align-items: center; margin-right: 14px; }
+        .setting-icon svg { width: 18px; fill: white; }
+        .setting-text { flex: 1; font-size: 15px; font-weight: 600; }
+        .setting-arrow { color: var(--text-secondary); font-size: 22px; font-weight: 400; }
+
+        /* PRO NAVIGATION */
+        nav { 
+            position: absolute; 
+            bottom: 0; 
+            width: 100%; 
+            height: 85px; 
+            background: rgba(15, 7, 10, 0.95); 
+            backdrop-filter: blur(20px); 
+            border-top: 1px solid var(--border); 
+            display: grid; 
+            grid-template-columns: repeat(5, 1fr); 
+            justify-items: center; 
+            align-items: center; 
+            z-index: 50; 
+            padding-bottom: env(safe-area-inset-bottom); 
+        }
+        .nav-item { background: none; border: none; cursor: pointer; opacity: 0.5; display: flex; flex-direction: column; align-items: center; padding: 10px; transition: 0.2s;}
+        .nav-item.active { opacity: 1; }
+        .nav-item svg { width: 26px; height: 26px; fill: white; transition: 0.3s;}
+        .nav-item.active svg { fill: var(--accent); }
+        .nav-create { width: 45px; height: 45px; background: linear-gradient(135deg, #FF2D55 0%, #ff5e7e 100%); border-radius: 14px; display: flex; justify-content: center; align-items: center; cursor: pointer; box-shadow: 0 4px 15px var(--accent-glow); opacity: 1; border: none;}
+        .nav-create svg { width: 24px; height: 24px; fill: white; }
+
+        @keyframes popIn {
+            0% { transform: scale(0.8); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        /* === RESPONSIVE LAYOUT (TABLET & DESKTOP) === */
+        @media (min-width: 768px) {
+            body { 
+                background: #000 url('https://images.unsplash.com/photo-1518199266791-5375a83164ba?w=2000&q=80') center/cover fixed; 
+                backdrop-filter: blur(20px); 
+            }
+            #app-frame { 
+                max-width: 1200px; 
+                width: 95vw; 
+                height: 90vh; 
+                border-radius: 24px; 
+                border: 1px solid rgba(255, 255, 255, 0.15); 
+                box-shadow: 0 30px 60px rgba(0,0,0,0.9); 
+            }
+            
+            /* Transform Nav from Bottom Bar to Sidebar */
+            nav[style*="display: grid"] { 
+                display: flex !important; 
+            }
+            nav {
+                width: 100px;
+                height: 100%;
+                top: 0;
+                left: 0;
+                flex-direction: column;
+                justify-content: center;
+                gap: 40px;
+                border-top: none;
+                border-right: 1px solid var(--border);
+                padding-bottom: 0;
+                background: var(--bg-surface);
+            }
+            
+            /* Shift Views next to the Sidebar */
+            .view { 
+                left: 100px; 
+                width: calc(100% - 100px); 
+                border-radius: 0 24px 24px 0; 
+            }
+            
+            /* Keep pre-login views full width */
+            #view-landing, #view-setup { 
+                left: 0; 
+                width: 100%; 
+                border-radius: 24px; 
+            }
+            
+            /* Top Header adapts to sidebar width */
+            .top-header { width: calc(100% - 100px); left: 100px; border-radius: 0 24px 0 0; }
+            #app-header.top-header { width: 100%; left: 0; border-radius: 24px 24px 0 0;}
+
+            /* Constrain Content Widths for readability on Desktop */
+            .card { max-width: 420px; height: 80%; }
+            .reel-container { max-width: 450px; margin: 0 auto; border-left: 1px solid var(--border); border-right: 1px solid var(--border); }
+            
+            /* Center lists and forms */
+            .padding-view h2 { text-align: center; }
+            .chat-row, .settings-group, .btn, .photo-upload { max-width: 600px; margin-left: auto; margin-right: auto; }
+            .setup-forms-container { max-width: 600px; margin: 0 auto; }
+            
+            /* Chat Interface Desktop Centering */
+            #view-chat { align-items: center; }
+            .chat-header { width: 100%; max-width: 800px; left: auto; border-radius: 0;}
+            .chat-messages-container { width: 100%; max-width: 800px; border-left: 1px solid var(--border); border-right: 1px solid var(--border); }
+            .chat-bottom { width: 100%; max-width: 800px; padding-bottom: 20px; border-left: 1px solid var(--border); border-right: 1px solid var(--border); border-radius: 0; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="app-frame">
+
+    <div id="view-landing" class="view active" style="justify-content: flex-end; padding: 40px 24px; background: linear-gradient(to bottom, transparent, #000), url('https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?w=800') center/cover;">
+        <h1 style="font-size: 48px; font-weight: 900; margin-bottom: 10px; line-height: 1; max-width: 600px; margin-left: auto; margin-right: auto; width: 100%;">Find your<br><span style="color: var(--accent);">spark.</span></h1>
+        <p style="color: var(--text-secondary); margin-bottom: 40px; font-size: 16px; max-width: 600px; margin-left: auto; margin-right: auto; width: 100%;">The pro way to connect and share.</p>
+        <button class="btn btn-primary" onclick="goToView('view-setup')">Create Account</button>
+    </div>
+
+    <div id="view-setup" class="view padding-view">
+        <h2 style="font-size: 28px; margin-bottom: 30px; font-weight: 800; text-align: center;">Set up your profile</h2>
+        
+        <div class="setup-forms-container">
+            <div class="photo-upload">
+                <svg viewBox="0 0 24 24" style="width: 28px; fill: var(--accent); margin-bottom: 5px;"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>
+                <span style="font-size: 11px; font-weight: 700; color: var(--text-secondary);">ADD PHOTO</span>
+                <input type="file" accept="image/*" onchange="updateProfileImage(event)">
+                <img id="setup-preview-img" src="">
+            </div>
+
+            <div class="input-group">
+                <label>First Name</label>
+                <input type="text" id="setup-name" class="input-field" placeholder="e.g. Alex">
+            </div>
+
+            <div style="display: flex; gap: 15px; width: 100%;">
+                <div class="input-group" style="flex: 1;">
+                    <label>I am a</label>
+                    <select id="setup-gender" class="input-field">
+                        <option value="Woman">Woman</option>
+                        <option value="Man">Man</option>
+                        <option value="Non-Binary">Non-Binary</option>
+                    </select>
+                </div>
+                <div class="input-group" style="flex: 1;">
+                    <label>Show me</label>
+                    <select id="setup-preference" class="input-field">
+                        <option value="Everyone">Everyone</option>
+                        <option value="Men">Men</option>
+                        <option value="Women">Women</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label>Verified Location</label>
+                <div style="display: flex; align-items: center; gap: 10px; background: var(--bg-surface); padding: 8px; border-radius: 12px; border: 1px solid var(--border);">
+                    <button class="btn btn-secondary" onclick="fetchLiveLocation()" id="loc-btn" style="margin: 0; padding: 10px 15px; width: auto; font-size: 14px; display: flex; gap: 6px; align-items: center;">
+                        <svg viewBox="0 0 24 24" style="width: 16px; fill: currentColor;"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg> Get GPS
+                    </button>
+                    <span id="setup-location-display" style="flex: 1; font-size: 14px; color: var(--text-secondary); text-align: right; padding-right: 10px;">Requires Access</span>
+                </div>
+            </div>
+
+            <button class="btn btn-primary" onclick="finishSetup()" style="margin-top: 10px;">Enter Ignite</button>
+        </div>
+    </div>
+
+    <div id="app-header" class="top-header" style="display: none;">
+        <div class="logo"><svg viewBox="0 0 24 24"><path d="M17.5 12.4c-1.5-1.9-2.9-3.2-2.9-5.4 0-1.8 1.1-3.4 2.8-4.2C15.8 2.3 14 2 12 2 6.5 2 2 6.5 2 12s4.5 10 10 10c4.1 0 7.7-2.5 9.1-6.2-1.2.6-2.5.9-3.8.9-3.5 0-6.4-2.7-6.4-6.2 0-1.5.5-2.9 1.4-4.1.2 1.9 1.5 3.5 3.2 4.1zM12 20c-4.4 0-8-3.6-8-8s3.6-8 8-8c1.6 0 3.2.5 4.5 1.3-1.4 1.2-2.3 2.9-2.3 4.8 0 2.8 1.9 5.3 4.6 6-.7 2.3-2.9 3.9-5.3 3.9z"/></svg> Ignite</div>
+    </div>
+
+    <div id="view-discover" class="view">
+        <div class="deck" id="card-deck"></div>
+        <div class="controls">
+            <div class="circle-btn" onclick="swipe('left')"><svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg></div>
+            <div class="circle-btn like" onclick="swipe('right')"><svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg></div>
+        </div>
+    </div>
+
+    <div id="view-reels" class="view">
+        <div class="reel-container">
+            <img src="https://images.unsplash.com/photo-1517457373958-b7bdd4587205?w=800" class="reel-video"> 
+            <div class="reel-ui">
+                <div class="reel-info">
+                    <h3>Julian, 27</h3>
+                    <p>POV: We just found the best coffee spot in the city ☕️</p>
+                </div>
+                <div class="reel-actions">
+                    <button class="reel-action-btn" onclick="alert('Liked!')"><svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg><span class="like-count">1.2k</span></button>
+                    <button class="reel-action-btn" onclick="goToAppView('view-chat')"><svg viewBox="0 0 24 24"><path d="M21.99 4c0-1.1-.89-2-1.99-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14l4 4-.01-18z"/></svg>Chat</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="view-studio" class="view camera-view" style="z-index: 100;">
+        <video id="live-camera" autoplay playsinline></video>
+        <div class="camera-ui-layer">
+            <div class="camera-header">
+                <button style="background:none; border:none; color:white; font-size: 16px; cursor: pointer; font-weight: 600;" onclick="closeStudio()">✕</button>
+                <div class="add-music-btn" onclick="alert('Music Selection API will open here!')">
+                    <svg viewBox="0 0 24 24" style="width: 16px; fill: white;"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg> Add Music
+                </div>
+                <div style="width: 24px;"></div>
+            </div>
+            <div class="capture-area">
+                <button class="cam-tool" onclick="alert('Opening camera roll...')"><svg viewBox="0 0 24 24"><path d="M22 16V4c0-1.1-.9-2-2-2H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2zm-11-4l2.03 2.71L16 11l4 5H8l3-4zM2 6v14c0 1.1.9 2 2 2h14v-2H4V6H2z"/></svg></button>
+                <div class="capture-btn" onclick="alert('Snapping photo from live feed!')">
+                    <div class="capture-inner"></div>
+                </div>
+                <button class="cam-tool" onclick="switchCamera()"><svg viewBox="0 0 24 24"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/></svg></button>
+            </div>
+        </div>
+    </div>
+
+    <div id="view-inbox" class="view padding-view">
+        <h2 style="font-size: 28px; font-weight: 800; margin-bottom: 20px;">Messages</h2>
+        <div class="chat-row" onclick="goToView('view-chat')">
+            <img src="https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=200">
+            <div style="flex: 1;">
+                <h4 style="font-weight:700; font-size: 16px; margin-bottom: 4px;">Elena</h4>
+                <p style="color: var(--text-secondary); font-size: 13px;">Reacted to your story ❤️</p>
+            </div>
+            <div class="unread-dot"></div>
+        </div>
+    </div>
+
+    <div id="view-chat" class="view" style="z-index: 60;">
+        <div class="top-header chat-header">
+            <button style="background:none; border:none; color:white; cursor: pointer; display: flex; align-items: center;" onclick="goToAppView('view-inbox')">
+                <svg viewBox="0 0 24 24" style="width: 24px; fill: currentColor;"><path d="M15.41 16.59L10.83 12l4.58-4.59L14 6l-6 6 6 6 1.41-1.41z"/></svg>
+            </button>
+            <div style="flex: 1; display: flex; align-items: center; gap: 10px; margin-left: 10px;">
+                <img src="https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=100" style="width: 36px; height: 36px; border-radius: 50%; object-fit: cover;">
+                <h3 style="font-weight: 700; font-size: 16px;">Elena</h3>
+            </div>
+        </div>
+        <div id="chat-messages" class="chat-messages-container">
+            <div style="padding:14px 18px; background:var(--bg-surface); border:1px solid var(--border); border-radius:20px; border-bottom-left-radius:4px; align-self:flex-start; font-size: 15px;">Hey! Loved your profile.</div>
+        </div>
+        <div class="chat-bottom">
+            <input type="text" id="chat-input" placeholder="Message..." style="flex: 1; background: var(--bg-base); border: 1px solid var(--border); color: white; padding: 12px 16px; border-radius: 20px; outline: none; font-size: 15px;">
+            <button onclick="sendMessage()" style="width: 44px; height: 44px; border-radius: 50%; background: var(--accent); border: none; display: flex; justify-content: center; align-items: center; cursor: pointer; flex-shrink: 0; box-shadow: 0 4px 10px var(--accent-glow);">
+                <svg viewBox="0 0 24 24" style="width: 20px; fill: white; transform: translateX(2px);"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+            </button>
+        </div>
+    </div>
+
+    <div id="view-profile" class="view padding-view">
+        <h2 style="font-size: 24px; font-weight: 800; margin-bottom: 24px;">Settings</h2>
+
+        <div style="text-align: center; margin-bottom: 20px; position: relative;">
+            <div style="position: relative; width: 110px; height: 110px; margin: 0 auto; border-radius: 50%; border: 3px solid var(--accent); overflow: hidden; background: var(--bg-surface);">
+                <img id="profile-img-display" src="https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?w=200" style="width: 100%; height: 100%; object-fit: cover;">
+                <div style="position: absolute; bottom: 0; left: 0; width: 100%; background: rgba(0,0,0,0.6); padding: 4px 0; display: flex; justify-content: center;">
+                    <svg viewBox="0 0 24 24" style="width: 14px; fill: white;"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+                </div>
+            </div>
+            <input type="file" accept="image/*" onchange="updateProfileImage(event)" style="position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 110px; height: 110px; opacity: 0; cursor: pointer; border-radius: 50%;">
+        </div>
+
+        <div style="text-align: center; margin-bottom: 30px;">
+            <h2 id="profile-name-display" style="font-size: 22px; font-weight: 800;">My Profile</h2>
+            <p id="profile-location-display" style="color: var(--accent); font-size: 14px; margin-top: 4px; font-weight: 600;">Location Not Verified</p>
+        </div>
+
+        <div class="settings-group">
+            <div class="setting-item" onclick="alert('Open Edit Info Page')">
+                <div class="setting-icon"><svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div>
+                <div class="setting-text">Account Information</div>
+                <div class="setting-arrow">›</div>
+            </div>
+            <div class="setting-item" onclick="alert('Discovery Preferences')">
+                <div class="setting-icon" style="background: rgba(255, 45, 85, 0.15);"><svg viewBox="0 0 24 24" style="fill: var(--accent);"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg></div>
+                <div class="setting-text">Discovery Preferences</div>
+                <div class="setting-arrow">›</div>
+            </div>
+        </div>
+
+        <div class="settings-group">
+            <div class="setting-item" onclick="alert('Notification Settings')">
+                <div class="setting-icon"><svg viewBox="0 0 24 24"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2zm-2 1H8v-6c0-2.48 1.51-4.5 4-4.5s4 2.02 4 4.5v6z"/></svg></div>
+                <div class="setting-text">Notifications</div>
+                <div class="setting-arrow">›</div>
+            </div>
+            <div class="setting-item" onclick="alert('Privacy Settings')">
+                <div class="setting-icon"><svg viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg></div>
+                <div class="setting-text">Privacy & Security</div>
+                <div class="setting-arrow">›</div>
+            </div>
+        </div>
+
+        <button class="btn btn-secondary" onclick="alert('Logging out...'); location.reload();" style="color: #ff3b30; border-color: #ff3b30;">Log Out</button>
+    </div>
+
+    <nav id="app-nav" style="display: none;">
+        <button class="nav-item active" id="nav-discover" onclick="goToAppView('view-discover')"><svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg></button>
+        <button class="nav-item" id="nav-reels" onclick="goToAppView('view-reels')"><svg viewBox="0 0 24 24"><path d="M4 6h16v2H4zm2-4h12v2H6zm14 8H4c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2v-8c0-1.1-.9-2-2-2zm0 10H4v-8h16v8z"/></svg></button>
+        <button class="nav-create" onclick="goToView('view-studio')"><svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg></button>
+        <button class="nav-item" id="nav-inbox" onclick="goToAppView('view-inbox')"><svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg></button>
+        <button class="nav-item" id="nav-profile" onclick="goToAppView('view-profile')"><svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></button>
+    </nav>
+
+</div>
+
+<script>
+    const swipingProfiles = [
+        { name: "Elena", age: 24, location: "Brooklyn, NY", img: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=600", bio: "Art gallery curator." },
+        { name: "Julian", age: 27, location: "Manhattan, NY", img: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=600", bio: "Musician & weekend explorer." },
+        { name: "Maya", age: 25, location: "Queens, NY", img: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=600", bio: "Software dev by day, foodie by night." }
+    ];
+
+    let currentCardIndex = 0;
+    let previousAppView = 'view-discover'; 
+    let userVerifiedLocation = "Location Not Verified"; 
+    let cameraStream = null;
+    let startX = 0, currentX = 0, isDragging = false;
+
+    function initDrag() {
+        const card = document.getElementById('active-card');
+        if (!card) return;
+
+        const startDrag = (e) => {
+            isDragging = true;
+            startX = e.type.includes('mouse') ? e.pageX : e.touches[0].clientX;
+            card.style.transition = 'none'; 
+        };
+
+        const drag = (e) => {
+            if (!isDragging) return;
+            const x = e.type.includes('mouse') ? e.pageX : e.touches[0].clientX;
+            currentX = x - startX;
+            const rotate = currentX * 0.05;
+            card.style.transform = `translateX(${currentX}px) rotate(${rotate}deg)`;
+        };
+
+        const endDrag = () => {
+            if (!isDragging) return;
+            isDragging = false;
+            card.style.transition = '0.4s ease-out'; 
+            
+            if (Math.abs(currentX) > 80) swipe(currentX > 0 ? 'right' : 'left');
+            else card.style.transform = 'translateX(0px) rotate(0deg)';
+            currentX = 0;
+        };
+
+        card.addEventListener('mousedown', startDrag);
+        card.addEventListener('touchstart', startDrag, {passive: true});
+        document.addEventListener('mousemove', drag);
+        document.addEventListener('touchmove', drag, {passive: true});
+        document.addEventListener('mouseup', endDrag);
+        document.addEventListener('touchend', endDrag);
+    }
+
+    function goToView(viewId) {
+        document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+        document.getElementById(viewId).classList.add('active');
+        
+        if(viewId === 'view-reels' || viewId === 'view-chat' || viewId === 'view-studio') {
+            document.getElementById('app-header').style.display = 'none';
+        } else if (document.getElementById('app-nav').style.display !== 'none') {
+            document.getElementById('app-header').style.display = 'flex';
+        }
+
+        if(viewId === 'view-studio') startCamera();
+        else stopCamera();
+    }
+
+    function goToAppView(viewId) {
+        goToView(viewId);
+        previousAppView = viewId;
+        document.querySelectorAll('.nav-item').forEach(btn => btn.classList.remove('active'));
+        if(viewId === 'view-discover') document.getElementById('nav-discover').classList.add('active');
+        if(viewId === 'view-reels') document.getElementById('nav-reels').classList.add('active');
+        if(viewId === 'view-inbox') document.getElementById('nav-inbox').classList.add('active');
+        if(viewId === 'view-profile') document.getElementById('nav-profile').classList.add('active');
+    }
+
+    function closeStudio() { goToAppView(previousAppView); }
+
+    function updateProfileImage(event) {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('setup-preview-img').src = e.target.result;
+                document.getElementById('setup-preview-img').style.display = 'block';
+                document.getElementById('profile-img-display').src = e.target.result; 
+            }
+            reader.readAsDataURL(file);
+        }
+    }
+
+    function fetchLiveLocation() {
+        const display = document.getElementById('setup-location-display');
+        display.innerText = "Locating...";
+        display.style.color = "var(--accent)";
+
+        if ("geolocation" in navigator) {
+            navigator.geolocation.getCurrentPosition(async (position) => {
+                setTimeout(() => {
+                    userVerifiedLocation = "Gauradaha, Koshi Province"; 
+                    display.innerText = userVerifiedLocation;
+                    display.style.color = "white";
+                    
+                    const btn = document.getElementById('loc-btn');
+                    btn.style.background = "#28a745"; 
+                    btn.style.borderColor = "#28a745";
+                    btn.style.color = "white";
+                    btn.innerHTML = `<svg viewBox="0 0 24 24" style="width: 16px; fill: white;"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg> Verified`;
+                }, 800);
+            }, (error) => {
+                display.innerText = "Location Denied";
+                display.style.color = "#ff3b30";
+            });
+        } else {
+            display.innerText = "GPS Not Supported";
+            display.style.color = "#ff3b30";
+        }
+    }
+
+    function finishSetup() {
+        const nameInput = document.getElementById('setup-name').value;
+        const displayName = nameInput ? nameInput : "User";
+        
+        document.getElementById('profile-name-display').innerText = displayName;
+        document.getElementById('profile-location-display').innerText = userVerifiedLocation;
+        
+        document.getElementById('app-nav').style.display = 'grid'; // Grid on mobile, overridden to flex on desktop via CSS !important
+        goToAppView('view-discover');
+        renderDeck(); 
+    }
+
+    function renderDeck() {
+        const deck = document.getElementById('card-deck');
+        deck.innerHTML = '';
+        
+        if (currentCardIndex >= swipingProfiles.length) {
+            deck.innerHTML = `
+                <div style="text-align:center; color: var(--text-secondary); margin-top: 50px;">
+                    <div class="circle-btn" style="margin: 0 auto 20px; width: 80px; height: 80px;">
+                        <svg viewBox="0 0 24 24" style="width: 40px; fill: var(--text-secondary);"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+                    </div>
+                    <h3 style="font-weight: 800; font-size: 20px; margin-bottom: 8px; color: white;">You're caught up!</h3>
+                    <p style="font-size: 14px;">Expand your distance to see more people.</p>
+                </div>`;
+            return;
+        }
+
+        const profile = swipingProfiles[currentCardIndex];
+        const cardHtml = `
+            <div class="card" id="active-card">
+                <img src="${profile.img}" alt="${profile.name}" draggable="false">
+                <div class="card-info">
+                    <h2>${profile.name}, ${profile.age}</h2>
+                    <p>${profile.bio}</p>
+                    <div class="location-badge">
+                        <svg viewBox="0 0 24 24" style="width: 12px; fill: white;"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+                        ${profile.location}
+                    </div>
+                </div>
+            </div>
+        `;
+        deck.innerHTML = cardHtml;
+        setTimeout(initDrag, 50);
+    }
+
+    function swipe(direction) {
+        const card = document.getElementById('active-card');
+        if (!card) return;
+        
+        const moveOutWidth = document.body.clientWidth * 1.5;
+        card.style.transition = '0.4s ease-out';
+        card.style.transform = `translateX(${direction === 'left' ? -moveOutWidth : moveOutWidth}px) rotate(${direction === 'left' ? -30 : 30}deg)`;
+        card.style.opacity = '0';
+        
+        setTimeout(() => {
+            currentCardIndex++;
+            renderDeck();
+        }, 300);
+    }
+
+    async function startCamera() {
+        const video = document.getElementById('live-camera');
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+            try {
+                cameraStream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: "user" },
+                    audio: true 
+                });
+                video.srcObject = cameraStream;
+            } catch (err) {
+                console.error("Camera access denied", err);
+                video.style.background = "url('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2000') center/cover";
+            }
+        }
+    }
+    
+    function stopCamera() {
+        if (cameraStream) {
+            cameraStream.getTracks().forEach(track => track.stop());
+            cameraStream = null;
+        }
+    }
+
+    function switchCamera() { alert("Flipping camera perspective..."); }
+
+    function sendMessage() {
+        const input = document.getElementById('chat-input');
+        const text = input.value.trim();
+        if(!text) return;
+        
+        const chatContainer = document.getElementById('chat-messages');
+        const msgDiv = document.createElement('div');
+        msgDiv.style.cssText = "padding:14px 18px; background:var(--accent); color:white; border:1px solid var(--accent); border-radius:20px; border-bottom-right-radius:4px; align-self:flex-end; font-size: 15px; margin-top: 10px; max-width: 80%; animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;";
+        msgDiv.innerText = text;
+        
+        chatContainer.appendChild(msgDiv);
+        input.value = '';
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+</script>
+</body>
+</html>
